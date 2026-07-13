@@ -1,0 +1,852 @@
+/* RaktaSetu — design system
+   Monochrome base, single crimson accent.
+
+   ink      #16171b  (near-black, text + buttons)
+   paper    #f4f4f5  (page background)
+   surface  #ffffff  (cards — no borders, soft shadow)
+   crimson  #a4123f  (accent; the hero gradient and blood-group badges)
+   crimson2 #7c0d2e  (gradient tail / hover)
+   sage     #3e5c50  (secondary semantic: "standard" urgency, open status)
+
+   Surfaces are separated by shadow in light mode and by hairline borders in
+   dark mode, where shadows are invisible. --card-line / --shadow flip together.
+*/
+:root {
+  --ink: #16171b;
+  --paper: #f4f4f5;
+  --surface: #fff;
+  --text-muted: #6b6b70;
+  --crimson: #a4123f;
+  --crimson-dark: #7c0d2e;
+  --sage: #3e5c50;
+  --line: #e4e4e7;
+
+  /* Buttons are solid black in light, solid white in dark. */
+  --btn-bg: #16171b;
+  --btn-fg: #fff;
+
+  --card-line: transparent;
+  --radius: 16px;
+  --radius-sm: 10px;
+
+  --online: #1f9d55;
+  --online-soft: #e6f4ec;
+  --online-line: #c7e6d4;
+  --offline: #c0392b;
+  --offline-soft: #fbe9e7;
+  --offline-line: #f3ccc6;
+
+  --shadow: 0 1px 2px rgba(22, 23, 27, 0.04), 0 8px 24px rgba(22, 23, 27, 0.06);
+  --shadow-lift: 0 6px 16px rgba(22, 23, 27, 0.08), 0 20px 44px rgba(22, 23, 27, 0.1);
+  --shadow-btn: 0 6px 16px rgba(22, 23, 27, 0.22);
+}
+
+/* Dark mode: shadows read as nothing on dark surfaces, so depth comes from
+   hairline borders and a lifted surface colour instead. */
+:root[data-theme="dark"] {
+  --ink: #f1f1f3;
+  --paper: #101013;
+  --surface: #1a1a1f;
+  --text-muted: #9a9aa2;
+  --crimson: #e0447a;
+  --crimson-dark: #c22d61;
+  --sage: #6fa08f;
+  --line: #2e2e35;
+
+  --btn-bg: #f1f1f3;
+  --btn-fg: #16171b;
+
+  --card-line: #2e2e35;
+
+  --online-soft: #16301f;
+  --online-line: #234a31;
+  --offline-soft: #351a17;
+  --offline-line: #542a24;
+
+  --shadow: none;
+  --shadow-lift: none;
+  --shadow-btn: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink: #f1f1f3;
+    --paper: #101013;
+    --surface: #1a1a1f;
+    --text-muted: #9a9aa2;
+    --crimson: #e0447a;
+    --crimson-dark: #c22d61;
+    --sage: #6fa08f;
+    --line: #2e2e35;
+
+    --btn-bg: #f1f1f3;
+    --btn-fg: #16171b;
+
+    --card-line: #2e2e35;
+
+    --online-soft: #16301f;
+    --online-line: #234a31;
+    --offline-soft: #351a17;
+    --offline-line: #542a24;
+
+    --shadow: none;
+    --shadow-lift: none;
+    --shadow-btn: none;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Poppins", "Noto Sans Devanagari", system-ui, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: "Poppins", "Noto Sans Devanagari", system-ui, sans-serif;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+h1 { font-size: 2rem; }
+h3 { font-size: 1.1rem; }
+
+a { color: var(--crimson); }
+
+/* ---------- Nav ---------- */
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 2rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--card-line);
+  box-shadow: 0 1px 12px rgba(22, 23, 27, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+/* No flex `gap` here: "Blood" and <span>Link</span> are separate flex items,
+   and a gap would open a space in the middle of the wordmark. */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  text-decoration: none;
+}
+.brand span { color: var(--crimson); }
+
+/* Droplet mark, echoing the logo in the reference. */
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  margin-right: 0.6rem;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--card-line);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.brand-mark svg { width: 17px; height: 17px; }
+
+.nav nav { display: flex; align-items: center; gap: 1.4rem; flex-wrap: wrap; }
+.nav nav a {
+  position: relative;
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding-bottom: 4px;
+}
+/* Active link gets a short underline rule, as in the reference. */
+.nav nav a.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--ink);
+}
+.nav nav a:hover { color: var(--crimson); }
+/* The nav "Log in" is an outlined pill, not a filled button. */
+.nav nav a.btn.outline { padding: 0.5rem 1.6rem; }
+.nav nav a.btn.outline.active::after { display: none; }
+
+/* ---------- Theme / language toggles ---------- */
+.icon-btn {
+  font: inherit;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: 999px;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+.icon-btn:hover { background: var(--paper); }
+
+.lang-switch {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+.lang-opt {
+  font: 600 0.78rem "Poppins", "Noto Sans Devanagari", sans-serif;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.lang-opt.active { background: var(--btn-bg); color: var(--btn-fg); }
+
+/* ---------- Layout ---------- */
+.page { max-width: 1060px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+.page.center { display: flex; justify-content: center; padding-top: 3.5rem; }
+.page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+  flex-wrap: wrap;
+}
+.muted { color: var(--text-muted); font-size: 0.92rem; }
+.error { color: var(--crimson); font-weight: 500; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 1.1rem;
+}
+
+/* ---------- Landing / hero ---------- */
+.hero {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+  min-height: calc(100vh - 66px);
+  display: flex;
+  align-items: center;
+}
+/* The gradient sweep. preserveAspectRatio="none" lets the curve stretch to
+   whatever the viewport is, so the silhouette survives every breakpoint. */
+.hero-blob {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 3rem 2rem 4rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+.hero-copy {
+  grid-column: 2;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1.25rem;
+}
+.hero-copy h1 {
+  font-size: clamp(2rem, 3.6vw, 3.1rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin: 0;
+  color: var(--ink);
+}
+.hero-copy p {
+  margin: 0;
+  max-width: 46ch;
+  color: var(--text-muted);
+  font-size: 0.97rem;
+}
+.hero-cta { display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: flex-end; }
+.hero-cta .btn { padding: 0.85rem 1.9rem; font-size: 1rem; }
+
+/* Below the fold: how it works + stats. */
+.section { max-width: 1060px; margin: 0 auto; padding: 4.5rem 1.25rem; }
+.section-head { text-align: center; margin-bottom: 2.5rem; }
+.section-head h2 { font-size: 1.9rem; margin: 0 0 0.5rem; }
+.section-head p { margin: 0; color: var(--text-muted); }
+
+.step { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
+.step-num {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(140deg, #b21f49 0%, var(--crimson-dark) 100%);
+  flex-shrink: 0;
+}
+.step h3 { margin: 0; }
+.step p { margin: 0; color: var(--text-muted); font-size: 0.92rem; }
+
+.stat-band {
+  background: var(--surface);
+  border-top: 1px solid var(--card-line);
+  border-bottom: 1px solid var(--card-line);
+  box-shadow: var(--shadow);
+}
+.stat-band .section { padding: 3rem 1.25rem; }
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1.5rem;
+  text-align: center;
+}
+.stat strong {
+  display: block;
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: linear-gradient(140deg, #b21f49 0%, var(--crimson-dark) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+:root[data-theme="dark"] .stat strong { background: none; color: var(--crimson); }
+.stat span { color: var(--text-muted); font-size: 0.9rem; }
+
+@media (max-width: 860px) {
+  .hero { min-height: 0; }
+  .hero-inner { grid-template-columns: 1fr; padding: 2.5rem 1.5rem 3.5rem; }
+  .hero-copy { grid-column: 1; text-align: left; align-items: flex-start; }
+  .hero-cta { justify-content: flex-start; }
+  .hero-blob { opacity: 0.14; }
+}
+
+/* ---------- Cards ---------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius);
+  padding: 1.4rem;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+.card.empty { text-align: center; color: var(--text-muted); padding: 2.5rem; }
+.grid .card:hover { box-shadow: var(--shadow-lift); transform: translateY(-2px); }
+:root[data-theme="dark"] .grid .card:hover { border-color: #3d3d46; }
+
+/* Signature element: the blood-bag type badge.
+   Modeled on the ISBT label on a real blood bag — the group in large type
+   with a "tail" notch on top. This is the one place colour survives. */
+.type-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  height: 56px;
+  padding: 0 8px;
+  background: linear-gradient(140deg, #b21f49 0%, var(--crimson-dark) 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.3rem;
+  letter-spacing: -0.02em;
+  border-radius: 8px 8px 16px 16px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(164, 18, 63, 0.28);
+}
+.type-badge::before {
+  content: "";
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 7px;
+  background: var(--crimson-dark);
+  border-radius: 3px 3px 0 0;
+}
+.type-badge.small {
+  min-width: 40px;
+  height: 40px;
+  font-size: 0.95rem;
+}
+
+/* ---------- Requests ---------- */
+.request { display: flex; flex-direction: column; gap: 0.75rem; }
+.request-top { display: flex; gap: 0.9rem; align-items: flex-start; }
+.request-top > div { flex: 1; }
+.urgency-critical { border-left: 4px solid var(--crimson); }
+.urgency-urgent { border-left: 4px solid #d98a2b; }
+
+.pill {
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+.pill.critical { color: var(--crimson); }
+.pill.urgent { color: #b06a12; }
+.pill.standard { color: var(--sage); }
+
+.status {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+.status-open { color: var(--sage); }
+.status-matched { color: #b06a12; }
+.status-fulfilled { color: var(--text-muted); }
+.status-cancelled { color: #999; }
+
+.note { background: var(--paper); border-radius: var(--radius-sm); padding: 0.7rem 0.9rem; font-size: 0.9rem; margin: 0; }
+.donor-list { font-size: 0.9rem; border-top: 1px solid var(--line); padding-top: 0.6rem; }
+.donor-list p { margin: 0.2rem 0; }
+.request-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: auto; }
+
+.donor { display: flex; gap: 0.9rem; align-items: center; }
+
+/* ---------- Forms ---------- */
+.auth { width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: 0.9rem; }
+label { display: flex; flex-direction: column; gap: 0.35rem; font-weight: 500; font-size: 0.92rem; }
+input, select, textarea {
+  font: inherit;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+}
+input:focus-visible, select:focus-visible, textarea:focus-visible, .btn:focus-visible, .nav a:focus-visible {
+  outline: 2px solid var(--crimson);
+  outline-offset: 2px;
+}
+.row { display: flex; gap: 0.75rem; }
+.row label { flex: 1; }
+
+/* Buttons are solid black pills in light mode, solid white in dark. */
+.btn {
+  font: inherit;
+  font-weight: 600;
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  padding: 0.65rem 1.5rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  transition: opacity 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.btn:hover { box-shadow: var(--shadow-btn); opacity: 0.92; }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.5; cursor: default; box-shadow: none; }
+.btn.small { padding: 0.4rem 1rem; font-size: 0.85rem; }
+.btn.outline {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--ink);
+}
+.btn.outline:hover { background: var(--ink); color: var(--surface); }
+.btn.ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line);
+}
+.btn.ghost:hover { background: var(--paper); box-shadow: none; }
+
+/* ---------- Segmented toggle (Blood Donors / Blood Banks) ---------- */
+.segmented {
+  display: inline-flex;
+  background: var(--surface);
+  border: 1px solid var(--card-line);
+  border-radius: 999px;
+  padding: 5px;
+  gap: 4px;
+  box-shadow: var(--shadow);
+}
+.segmented a, .segmented button {
+  font: 600 0.88rem "Poppins", "Noto Sans Devanagari", sans-serif;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 0.5rem 1.3rem;
+  border-radius: 999px;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.segmented a:hover:not(.active), .segmented button:hover:not(.active) { color: var(--ink); }
+.segmented a.active, .segmented button.active {
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+}
+.segmented-wrap { display: flex; justify-content: center; margin-bottom: 2rem; }
+
+/* ---------- Filters / inventory ---------- */
+.filters { display: flex; gap: 0.9rem; align-items: flex-end; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.filters label { min-width: 160px; }
+
+.summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 0.7rem;
+  margin-bottom: 1.5rem;
+}
+.summary-cell {
+  background: var(--surface);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  padding: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+.summary-cell strong { font-size: 1.2rem; }
+
+.stock-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.stock-table th, .stock-table td { text-align: left; padding: 0.8rem 1rem; border-bottom: 1px solid var(--line); }
+.stock-table tr:last-child td { border-bottom: none; }
+.stock-table th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
+.stock-table tr.out td { opacity: 0.45; }
+
+.stock-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+.stock-card { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
+.stock-card input { width: 90px; text-align: center; }
+
+/* ---------- Toasts ---------- */
+.toasts { position: fixed; top: 78px; right: 16px; display: flex; flex-direction: column; gap: 0.5rem; z-index: 50; max-width: 340px; }
+.toast {
+  background: var(--ink);
+  color: var(--surface);
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-sm);
+  border-left: 4px solid var(--crimson);
+  font-size: 0.9rem;
+  box-shadow: var(--shadow-lift);
+  animation: slide-in 0.25s ease;
+}
+@keyframes slide-in { from { transform: translateX(20px); opacity: 0; } }
+
+@media (max-width: 640px) {
+  .row { flex-direction: column; }
+  .nav { flex-direction: column; gap: 0.6rem; padding: 0.85rem 1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card, .btn, .segmented a, .segmented button { transition: none; }
+  .grid .card:hover { transform: none; }
+  .toast { animation: none; }
+}
+
+/* ---------- Call button ---------- */
+.call-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--online);
+  color: #fff;
+  border-color: transparent;
+  white-space: nowrap;
+}
+.call-btn:hover { background: #178040; box-shadow: 0 4px 12px rgba(31, 157, 85, 0.3); opacity: 1; }
+.donor.card { flex-wrap: wrap; }
+.donor.card .call-btn { margin-left: auto; }
+.donor-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* ---------- Online / offline status dot ---------- */
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--offline);
+  flex-shrink: 0;
+  display: inline-block;
+}
+.conn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.conn.online { color: var(--online); background: var(--online-soft); border-color: var(--online-line); }
+.conn.offline { color: var(--offline); background: var(--offline-soft); border-color: var(--offline-line); }
+.conn.online .status-dot {
+  background: var(--online);
+  box-shadow: 0 0 0 0 rgba(31, 157, 85, 0.5);
+  animation: pulse 1.8s infinite;
+}
+.conn.offline .status-dot { background: var(--offline); }
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(31, 157, 85, 0.5); }
+  70% { box-shadow: 0 0 0 6px rgba(31, 157, 85, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(31, 157, 85, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .conn.online .status-dot { animation: none; }
+}
+
+/* ---------- Profile page ---------- */
+.profile-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+.profile-id {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+}
+.profile-id h3 { margin: 0.3rem 0 0; }
+.avatar {
+  width: 92px;
+  height: 92px;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 2rem;
+  letter-spacing: -0.02em;
+  color: #fff;
+  background: linear-gradient(140deg, #b21f49 0%, var(--crimson-dark) 100%);
+  box-shadow: 0 6px 18px rgba(164, 18, 63, 0.3);
+}
+.role-chip {
+  text-transform: capitalize;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  color: var(--sage);
+}
+.role-chip.role-hospital { color: var(--crimson); }
+.role-chip.role-requester { color: #b06a12; }
+
+.avail-toggle {
+  margin-top: 0.6rem;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font: 600 0.9rem "Poppins", "Noto Sans Devanagari", sans-serif;
+  padding: 0.6rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: filter 0.15s ease;
+}
+.avail-toggle:hover { filter: brightness(0.97); }
+.avail-toggle:disabled { opacity: 0.6; cursor: default; }
+.avail-toggle.on { background: var(--online-soft); color: var(--online); border-color: var(--online-line); }
+.avail-toggle.on .status-dot { background: var(--online); }
+.avail-toggle.off { background: var(--offline-soft); color: var(--offline); border-color: var(--offline-line); }
+.avail-toggle.off .status-dot { background: var(--offline); }
+
+/* ---------- Account mode switcher ---------- */
+.mode-card { margin-bottom: 1.25rem; }
+.mode-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.mode-head h3 { margin: 0; }
+.mode-switch {
+  display: inline-flex;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px;
+  gap: 4px;
+}
+.mode-opt {
+  font: 600 0.9rem "Poppins", "Noto Sans Devanagari", sans-serif;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.mode-opt:hover:not(.active) { color: var(--ink); }
+.mode-opt.active { background: var(--btn-bg); color: var(--btn-fg); }
+.mode-opt:disabled { cursor: default; }
+.mode-hint {
+  margin: 0.9rem 0 0;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--line);
+}
+@media (max-width: 560px) {
+  .mode-switch { width: 100%; }
+  .mode-opt { flex: 1; }
+}
+
+.profile-form { display: flex; flex-direction: column; gap: 0.9rem; }
+.profile-form input:disabled { background: var(--paper); color: var(--text-muted); cursor: not-allowed; }
+.saved { color: var(--online); font-weight: 600; margin: 0; }
+
+@media (max-width: 720px) {
+  .profile-grid { grid-template-columns: 1fr; }
+}
+
+/* ---------- Admin / verification ---------- */
+.admin-tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 5px;
+  background: var(--surface);
+  border: 1px solid var(--card-line);
+  box-shadow: var(--shadow);
+  border-radius: 999px;
+  margin-bottom: 1.5rem;
+}
+.hospital-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.hospital-card h3 { margin: 0 0 0.3rem; }
+.hospital-card .license {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--line);
+}
+.hospital-actions { display: flex; gap: 0.5rem; }
+
+.verify-notice { text-align: center; padding: 2.5rem; border-top: 4px solid var(--sage); }
+.verify-notice.rejected { border-top-color: var(--crimson); }
+.verify-notice h1 { margin-bottom: 0.5rem; }
+
+/* ---------- Chat widget ---------- */
+.chat-fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 60;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(140deg, #b21f49 0%, var(--crimson-dark) 100%);
+  color: #fff;
+  border: none;
+  font: 600 1rem "Poppins", "Noto Sans Devanagari", sans-serif;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(164, 18, 63, 0.35);
+}
+.chat-fab:hover { filter: brightness(1.06); }
+
+.chat-panel {
+  position: fixed;
+  bottom: 88px;
+  right: 20px;
+  z-index: 60;
+  width: min(360px, calc(100vw - 32px));
+  height: 460px;
+  max-height: calc(100vh - 120px);
+  background: var(--surface);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lift);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.chat-head {
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+}
+.chat-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.chat-msg {
+  max-width: 85%;
+  padding: 0.55rem 0.8rem;
+  border-radius: 14px;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+}
+.chat-msg.user { align-self: flex-end; background: var(--btn-bg); color: var(--btn-fg); }
+.chat-msg.assistant { align-self: flex-start; background: var(--paper); border: 1px solid var(--line); }
+.chat-input {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  border-top: 1px solid var(--line);
+}
+.chat-input input { flex: 1; }
