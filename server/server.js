@@ -20,14 +20,21 @@ const server = http.createServer(app);
 // In dev, Vite may bind to a different port than 5173 if it's already taken,
 // so accept any localhost/127.0.0.1 origin instead of a single hardcoded one.
 const LOCALHOST_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
-// Production origins: comma-separated in CLIENT_ORIGIN, e.g.
-// CLIENT_ORIGIN=https://raktasetu.com,https://www.raktasetu.com
+// Any Vercel deployment of this project — production, git-branch, and preview
+// URLs all match, so new deploys don't need re-whitelisting each time.
+const VERCEL_ORIGIN = /^https:\/\/bloodmatching-platform[a-z0-9-]*\.vercel\.app$/;
+// Extra exact origins (e.g. a custom domain): comma-separated in CLIENT_ORIGIN.
 const allowedOrigins = (process.env.CLIENT_ORIGIN || "")
   .split(",")
   .map((o) => o.trim())
   .filter(Boolean);
 const corsOrigin = (origin, callback) => {
-  if (!origin || LOCALHOST_ORIGIN.test(origin) || allowedOrigins.includes(origin)) {
+  if (
+    !origin ||
+    LOCALHOST_ORIGIN.test(origin) ||
+    VERCEL_ORIGIN.test(origin) ||
+    allowedOrigins.includes(origin)
+  ) {
     return callback(null, true);
   }
   callback(new Error("Not allowed by CORS"));
