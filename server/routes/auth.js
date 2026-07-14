@@ -37,6 +37,17 @@ function validCoords(loc) {
   );
 }
 
+// Strong-password gate: min 8 chars with at least one letter and one number.
+// Returns an error string, or null if the password passes.
+function passwordError(pw) {
+  if (!pw || pw.length < 8) return "Password must be at least 8 characters";
+  if (pw.length > 72) return "Password must be at most 72 characters"; // bcrypt truncates past 72
+  if (!/[A-Za-z]/.test(pw) || !/\d/.test(pw)) {
+    return "Password must include at least one letter and one number";
+  }
+  return null;
+}
+
 function signToken(user) {
   return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
     expiresIn: "7d",
@@ -87,6 +98,8 @@ router.post("/register", async (req, res) => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({ message: "Enter a valid email address" });
     }
+    const pwErr = passwordError(password);
+    if (pwErr) return res.status(400).json({ message: pwErr });
     if (phone && !/^\d{10}$/.test(phone)) {
       return res
         .status(400)
@@ -140,7 +153,8 @@ router.post("/register", async (req, res) => {
           : undefined,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(err);
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 
@@ -156,7 +170,8 @@ router.post("/login", async (req, res) => {
     }
     res.json({ token: signToken(user), user: publicUser(user) });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(err);
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 
@@ -203,9 +218,8 @@ router.post("/verify-otp", async (req, res) => {
 router.post("/reset-password", async (req, res) => {
   const email = (req.body.email || "").toLowerCase().trim();
   const { otp, newPassword } = req.body;
-  if (!newPassword || newPassword.length < 6) {
-    return res.status(400).json({ message: "Password must be at least 6 characters" });
-  }
+  const pwErr = passwordError(newPassword);
+  if (pwErr) return res.status(400).json({ message: pwErr });
   const user = await User.findOne({ email }).select(
     "+resetOtpHash +resetOtpExpires +resetOtpAttempts"
   );
@@ -253,7 +267,8 @@ router.patch("/role", protect, async (req, res) => {
     // Re-issue the token so its embedded role stays in sync.
     res.json({ token: signToken(req.user), user: publicUser(req.user) });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(err);
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 
@@ -301,7 +316,8 @@ router.patch("/profile", protect, async (req, res) => {
     await u.save();
     res.json({ user: publicUser(u) });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(err);
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 

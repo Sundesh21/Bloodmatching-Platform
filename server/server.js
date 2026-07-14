@@ -2,6 +2,9 @@ import "dotenv/config";
 import express from "express";
 import http from "http";
 import cors from "cors";
+import helmet from "helmet";
+import mongoSanitize from "express-mongo-sanitize";
+import rateLimit from "express-rate-limit";
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import connectDB from "./config/db.js";
@@ -63,10 +66,34 @@ io.on("connection", (socket) => {
   if (socket.userId) socket.join(`user:${socket.userId}`);
 });
 
+app.use(helmet()); // sets security headers (XSS, clickjacking, MIME-sniffing, etc.)
 app.use(cors({ origin: corsOrigin }));
-app.use(express.json());
+app.use(express.json({ limit: "1mb" })); // cap body size so a giant payload can't OOM us
+app.use(mongoSanitize()); // strip $ and . operators from input -> blocks NoSQL query injection
+
+// Global brute-force / flood guard. Auth endpoints get a stricter one below.
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+// Tight limit on credential endpoints: 10 tries per 15 min per IP.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many attempts. Please wait a few minutes and try again." },
+});
+app.use("/api", globalLimiter);
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
+// Strict limiter only on the unauthenticated credential endpoints — NOT the whole
+// router, since /auth/me runs on every page load and would trip a tight limit.
+for (const p of ["login", "register", "forgot-password", "verify-otp", "reset-password"]) {
+  app.use(`/api/auth/${p}`, authLimiter);
+}
 app.use("/api/auth", authRoutes);
 app.use("/api/requests", requestRoutes);
 app.use("/api/donors", donorRoutes);

@@ -1,3 +1,24 @@
+<<<<<<< HEAD
 node_modules/
 dist/
 .env
+=======
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Secrets — .env.example is committed, .env never is
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+>>>>>>> 9f5c1c88e60753db1acab3049d87df5c6adebdbc

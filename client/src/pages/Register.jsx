@@ -49,11 +49,21 @@ export default function Register() {
     setError("");
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setForm((f) => ({
-          ...f,
-          location: { lat: pos.coords.latitude, lng: pos.coords.longitude },
-        }));
+      async (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        setForm((f) => ({ ...f, location: { lat, lng } }));
+        // Reverse-geocode coords -> city name and drop it in the city box.
+        // Free, keyless OpenStreetMap Nominatim; if it fails we keep the coords.
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&lat=${lat}&lon=${lng}`
+          );
+          const a = (await res.json()).address || {};
+          const city = a.city || a.town || a.village || a.county || a.state;
+          if (city) setForm((f) => ({ ...f, city }));
+        } catch {
+          /* keep coords; user can type the city manually */
+        }
         setLocating(false);
       },
       () => {

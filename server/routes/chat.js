@@ -86,7 +86,8 @@ RULES:
 
     res.json({ reply: reply || "Sorry, I couldn't produce an answer. Try rephrasing?", source: "claude" });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(err);
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 
