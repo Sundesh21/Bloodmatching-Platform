@@ -204,6 +204,32 @@ a { color: var(--crimson); }
 }
 .icon-btn:hover { background: var(--paper); }
 
+.bell-wrap { position: relative; display: inline-flex; }
+.bell { position: relative; }
+.bell-badge {
+  position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px;
+  padding: 0 4px; border-radius: 999px; background: #e5484d; color: #fff;
+  font-size: 0.65rem; font-weight: 700; display: flex; align-items: center; justify-content: center;
+}
+.bell-menu {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 20;
+  width: 280px; max-height: 360px; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm); box-shadow: var(--shadow-lift); padding: 0.5rem;
+}
+.bell-item {
+  padding: 0.55rem 0.6rem; border-radius: var(--radius-sm); font-size: 0.85rem;
+  border-bottom: 1px solid var(--line);
+}
+.bell-item:last-child { border-bottom: none; }
+
+.section-title { font-size: 1.05rem; margin: 1.5rem 0 0.75rem; }
+.fulfil-mode { display: flex; flex-direction: column; gap: 0.4rem; margin: 0.6rem 0; font-size: 0.9rem; }
+.fulfil-mode label { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; }
+.hello-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.btn.avail-toggle.on { background: #2e9e5b; border-color: #2e9e5b; color: #fff; }
+.btn.avail-toggle.off { background: #e5484d; border-color: #e5484d; color: #fff; }
+
 .lang-switch {
   display: inline-flex;
   border: 1px solid var(--line);
@@ -554,6 +580,24 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, .btn:focus-vi
 .stock-table tr:last-child td { border-bottom: none; }
 .stock-table th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
 .stock-table tr.out td { opacity: 0.45; }
+
+.hospital-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.hospital-item { padding: 0; overflow: hidden; }
+.hospital-head {
+  width: 100%; display: flex; align-items: center; gap: 1rem;
+  padding: 0.9rem 1rem; background: none; border: none; cursor: pointer;
+  color: inherit; font: inherit; text-align: left;
+}
+.hospital-name { font-weight: 600; flex: 1; }
+.hospital-total { white-space: nowrap; }
+.chevron { color: var(--text-muted); font-size: 0.7rem; }
+.hospital-detail {
+  display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center;
+  padding: 0 1rem 0.9rem; border-top: 1px solid var(--line);
+}
+.detail-cell { display: flex; align-items: center; gap: 0.4rem; }
+.detail-cell.out { opacity: 0.4; }
+.hospital-contact { width: 100%; font-size: 0.85rem; }
 
 .stock-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
 .stock-card { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }

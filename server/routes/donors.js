@@ -14,7 +14,7 @@ const router = Router();
 router.get("/", protect, blockUnverifiedHospital, async (req, res) => {
   const { bloodGroup, city, lat, lng } = req.query;
 
-  const filter = { role: "donor" };
+  const filter = { role: "donor", isAvailable: true };
   if (bloodGroup) {
     filter.bloodGroup = { $in: COMPATIBLE_DONORS[bloodGroup] || [bloodGroup] };
   }

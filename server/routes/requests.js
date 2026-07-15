@@ -3,6 +3,7 @@ import BloodRequest from "../models/BloodRequest.js";
 import User from "../models/User.js";
 import { protect, requireRole, blockUnverifiedHospital } from "../middleware/auth.js";
 import { COMPATIBLE_DONORS, recipientsFor } from "../utils/compatibility.js";
+import { daysUntilEligible } from "../utils/eligibility.js";
 
 const router = Router();
 
@@ -63,8 +64,8 @@ router.get("/", protect, blockUnverifiedHospital, async (req, res) => {
   if (bloodGroup) filter.bloodGroup = bloodGroup;
 
   const requests = await BloodRequest.find(filter)
-    .populate("requester", "name phone")
-    .populate("acceptedDonors.donor", "name bloodGroup phone")
+    .populate("requester", "name phone location")
+    .populate("acceptedDonors.donor", "name bloodGroup phone location")
     .sort({ createdAt: -1 })
     .limit(100);
   res.json({ requests });
@@ -79,9 +80,23 @@ router.get("/for-me", protect, requireRole("donor"), async (req, res) => {
     status: "open",
     city: req.user.city,
     bloodGroup: { $in: canServe },
+    requester: { $ne: req.user._id }, // never show a user their own request to donate to
   })
-    .populate("requester", "name phone")
+    .populate("requester", "name phone location")
     .sort({ urgency: 1, createdAt: -1 });
+  res.json({ requests });
+});
+
+// GET /api/requests/accepted-by-me — requests this donor accepted, so they keep
+// the requester's contact + location (and Maps navigation) after it's matched.
+router.get("/accepted-by-me", protect, requireRole("donor"), async (req, res) => {
+  const requests = await BloodRequest.find({
+    "acceptedDonors.donor": req.user._id,
+    status: { $in: ["matched", "fulfilled"] },
+  })
+    .populate("requester", "name phone city location")
+    .populate("acceptedDonors.donor", "name bloodGroup phone location")
+    .sort({ createdAt: -1 });
   res.json({ requests });
 });
 
@@ -92,6 +107,16 @@ router.post("/:id/accept", protect, requireRole("donor"), async (req, res) => {
   if (request.status !== "open" && request.status !== "matched") {
     return res.status(400).json({ message: "This request is no longer active" });
   }
+  if (request.requester.toString() === req.user._id.toString()) {
+    return res.status(400).json({ message: "You can't accept your own request" });
+  }
+  // Enforce the 90-day donation gap — a donor who recently gave can't accept.
+  const waitDays = daysUntilEligible(req.user.lastDonation);
+  if (waitDays > 0) {
+    return res
+      .status(403)
+      .json({ message: `You donated recently — not eligible to donate for ${waitDays} more day${waitDays === 1 ? "" : "s"}.` });
+  }
   const already = request.acceptedDonors.some(
     (a) => a.donor.toString() === req.user._id.toString()
   );
@@ -101,14 +126,22 @@ router.post("/:id/accept", protect, requireRole("donor"), async (req, res) => {
   request.status = "matched";
   await request.save();
   const populated = await request.populate([
-    { path: "requester", select: "name phone" },
-    { path: "acceptedDonors.donor", select: "name bloodGroup phone" },
+    { path: "requester", select: "name phone city location" },
+    { path: "acceptedDonors.donor", select: "name bloodGroup phone location" },
   ]);
 
   const io = req.app.get("io");
   io.to(`user:${request.requester._id || request.requester}`).emit("request:accepted", {
     request: populated,
-    donor: { name: req.user.name, bloodGroup: req.user.bloodGroup, phone: req.user.phone },
+    donor: { name: req.user.name, bloodGroup: req.user.bloodGroup, phone: req.user.phone, city: req.user.city },
+  });
+  // Confirm back to the donor with who to reach and where.
+  io.to(`user:${req.user._id}`).emit("request:you-accepted", {
+    requester: {
+      name: populated.requester?.name,
+      phone: populated.requester?.phone,
+      city: populated.requester?.city,
+    },
   });
   io.emit("feed:update", populated);
 
@@ -117,7 +150,7 @@ router.post("/:id/accept", protect, requireRole("donor"), async (req, res) => {
 
 // PATCH /api/requests/:id/status — requester fulfils/cancels their request
 router.patch("/:id/status", protect, blockUnverifiedHospital, async (req, res) => {
-  const { status } = req.body;
+  const { status, donorIds } = req.body;
   if (!["fulfilled", "cancelled"].includes(status)) {
     return res.status(400).json({ message: "Status must be fulfilled or cancelled" });
   }
@@ -129,7 +162,24 @@ router.patch("/:id/status", protect, blockUnverifiedHospital, async (req, res) =
 
   request.status = status;
   await request.save();
-  req.app.get("io").emit("feed:update", request);
+
+  // Stamp lastDonation only on the donors the requester confirms actually gave
+  // blood — never everyone who merely volunteered. Restrict to this request's
+  // accepted donors so a caller can't stamp arbitrary users.
+  const io = req.app.get("io");
+  if (status === "fulfilled" && Array.isArray(donorIds) && donorIds.length) {
+    const accepted = new Set(request.acceptedDonors.map((a) => a.donor.toString()));
+    const confirmed = donorIds.filter((id) => accepted.has(String(id)));
+    if (confirmed.length) {
+      const when = new Date();
+      await User.updateMany({ _id: { $in: confirmed } }, { lastDonation: when });
+      // Push the new eligibility clock to each credited donor so their UI
+      // flips to "not eligible" without a reload.
+      confirmed.forEach((id) => io.to(`user:${id}`).emit("donor:donated", { lastDonation: when }));
+    }
+  }
+
+  io.emit("feed:update", request);
   res.json({ request });
 });
 

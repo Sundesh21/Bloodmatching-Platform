@@ -65,6 +65,7 @@ function publicUser(u) {
     city: u.city,
     phone: u.phone,
     isAvailable: u.isAvailable,
+    lastDonation: u.lastDonation,
     hospitalName: u.hospitalName,
     licenseNo: u.licenseNo,
   };

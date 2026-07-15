@@ -8,6 +8,7 @@ export default function HospitalStock() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [stock, setStock] = useState({});
+  const [editing, setEditing] = useState("");
   const [saving, setSaving] = useState("");
   const [error, setError] = useState("");
 
@@ -31,6 +32,7 @@ export default function HospitalStock() {
         bloodGroup: bg,
         unitsAvailable: Number(stock[bg] ?? 0),
       });
+      setEditing("");
     } catch (err) {
       setError(err.response?.data?.message || t("hospitalStock.saveError"));
     } finally {
@@ -61,15 +63,28 @@ export default function HospitalStock() {
         {BLOOD_GROUPS.map((bg) => (
           <div key={bg} className="card stock-card">
             <span className="type-badge">{bg}</span>
-            <input
-              type="number"
-              min={0}
-              value={stock[bg] ?? 0}
-              onChange={(e) => setStock({ ...stock, [bg]: e.target.value })}
-            />
-            <button className="btn small" onClick={() => save(bg)} disabled={saving === bg}>
-              {saving === bg ? t("hospitalStock.saving") : t("hospitalStock.save")}
-            </button>
+            {editing === bg ? (
+              <>
+                <input
+                  type="number"
+                  min={0}
+                  value={stock[bg] ?? 0}
+                  onChange={(e) => setStock({ ...stock, [bg]: e.target.value })}
+                />
+                <button className="btn small" onClick={() => save(bg)} disabled={saving === bg}>
+                  {saving === bg ? t("hospitalStock.saving") : t("hospitalStock.save")}
+                </button>
+              </>
+            ) : (
+              <>
+                <strong className="stock-value">
+                  {stock[bg] ?? 0} <span className="muted">{t("hospitalStock.units")}</span>
+                </strong>
+                <button className="btn small ghost" onClick={() => setEditing(bg)}>
+                  {t("hospitalStock.edit")}
+                </button>
+              </>
+            )}
           </div>
         ))}
       </div>

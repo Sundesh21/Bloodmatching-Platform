@@ -12,6 +12,15 @@ api.interceptors.request.use((config) => {
 
 export const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
+// Days a donor must still wait before donating again (90-day whole-blood gap).
+// 0 = eligible now. Mirrors server/utils/eligibility.js.
+export const DONATION_INTERVAL_DAYS = 90;
+export function daysUntilEligible(lastDonation, now = Date.now()) {
+  if (!lastDonation) return 0;
+  const elapsed = (now - new Date(lastDonation).getTime()) / 86400000;
+  return Math.max(0, Math.ceil(DONATION_INTERVAL_DAYS - elapsed));
+}
+
 // Uploads a file straight from the browser to Cloudinary using an unsigned
 // upload preset, so no API secret is ever exposed to the client. Returns the
 // hosted file's secure_url (e.g. the hospital's scanned verification form).

@@ -3,6 +3,7 @@ import api, { BLOOD_GROUPS } from "../api";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useLanguage } from "../context/LanguageContext.jsx";
 import CallButton from "../components/CallButton.jsx";
+import DirectionsButton from "../components/DirectionsButton.jsx";
 import FindBloodTabs from "../components/FindBloodTabs.jsx";
 import HospitalVerifyGate from "../components/HospitalVerifyGate.jsx";
 
@@ -88,7 +89,12 @@ export default function Donors() {
                   {d.city} · {d.phone || t("common.noPhone")}
                 </p>
               </div>
-              <CallButton phone={d.phone} />
+              {d._id !== user.id && (
+                <>
+                  <CallButton phone={d.phone} />
+                  <DirectionsButton location={d.location} />
+                </>
+              )}
             </article>
           ))}
         </div>

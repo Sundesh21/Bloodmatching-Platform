@@ -11,6 +11,7 @@ import Register from "./pages/Register.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import NewRequest from "./pages/NewRequest.jsx";
 import Donors from "./pages/Donors.jsx";
+import Requests from "./pages/Requests.jsx";
 import Inventory from "./pages/Inventory.jsx";
 import HospitalStock from "./pages/HospitalStock.jsx";
 import Profile from "./pages/Profile.jsx";
@@ -48,7 +49,10 @@ export default function App() {
   const { theme, toggleTheme } = useTheme();
   const { lang, setLang, t } = useLanguage();
   const [toasts, setToasts] = useState([]);
+  const [notes, setNotes] = useState([]); // notification bell history (in-memory)
+  const [bellOpen, setBellOpen] = useState(false);
   const [online, setOnline] = useState(false);
+  const unread = notes.filter((n) => !n.read).length;
 
   const isDark =
     theme === "dark" ||
@@ -82,7 +86,7 @@ export default function App() {
     const socket = getSocket();
 
     const onNewMatch = ({ request, matchedBecause }) => {
-      pushToast(
+      notify(
         t("toast.newMatch", {
           bloodGroup: request.bloodGroup,
           patientName: request.patientName,
@@ -92,20 +96,39 @@ export default function App() {
       );
     };
     const onAccepted = ({ donor }) => {
-      pushToast(
+      notify(
         t("toast.accepted", {
           name: donor.name,
           bloodGroup: donor.bloodGroup,
+          city: donor.city,
           phone: donor.phone || t("toast.phoneFallback"),
         })
       );
     };
+    const onYouAccepted = ({ requester }) => {
+      notify(
+        t("toast.youAccepted", {
+          name: requester.name,
+          city: requester.city,
+          phone: requester.phone || t("toast.phoneFallback"),
+        })
+      );
+    };
+
+    const onDonated = ({ lastDonation }) => {
+      setUser((u) => (u ? { ...u, lastDonation } : u)); // flips eligibility UI live
+      notify(t("toast.donated"));
+    };
 
     socket.on("request:new", onNewMatch);
     socket.on("request:accepted", onAccepted);
+    socket.on("request:you-accepted", onYouAccepted);
+    socket.on("donor:donated", onDonated);
     return () => {
       socket.off("request:new", onNewMatch);
       socket.off("request:accepted", onAccepted);
+      socket.off("request:you-accepted", onYouAccepted);
+      socket.off("donor:donated", onDonated);
     };
   }, [user]);
 
@@ -113,6 +136,19 @@ export default function App() {
     const id = Date.now() + Math.random();
     setToasts((t) => [...t, { id, text }]);
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 8000);
+  }
+
+  // Fleeting toast + a lasting entry in the notification bell.
+  function notify(text) {
+    pushToast(text);
+    setNotes((n) => [{ id: Date.now() + Math.random(), text, read: false }, ...n]);
+  }
+
+  function toggleBell() {
+    setBellOpen((open) => {
+      if (!open) setNotes((n) => n.map((x) => ({ ...x, read: true }))); // opening marks all read
+      return !open;
+    });
   }
 
   return (
@@ -138,6 +174,7 @@ export default function App() {
             {user.role !== "admin" && (user.role !== "hospital" || user.status === "active") && (
               <NavLink to="/donors">{t("nav.findDonors")}</NavLink>
             )}
+            {user.role === "donor" && <NavLink to="/requests">{t("nav.findRequests")}</NavLink>}
             <NavLink to="/inventory">{t("nav.hospitalStock")}</NavLink>
             {user.role === "hospital" && <NavLink to="/my-stock">{t("nav.myStock")}</NavLink>}
             <NavLink to="/profile">{t("nav.profile")}</NavLink>
@@ -156,6 +193,30 @@ export default function App() {
               );
             })()}
             <LangSwitch lang={lang} setLang={setLang} />
+            <div className="bell-wrap">
+              <button
+                className="icon-btn bell"
+                onClick={toggleBell}
+                aria-label={t("nav.notifications")}
+                title={t("nav.notifications")}
+              >
+                🔔
+                {unread > 0 && <span className="bell-badge">{unread}</span>}
+              </button>
+              {bellOpen && (
+                <div className="bell-menu">
+                  {notes.length === 0 ? (
+                    <p className="muted">{t("nav.noNotifications")}</p>
+                  ) : (
+                    notes.map((n) => (
+                      <p key={n.id} className="bell-item">
+                        {n.text}
+                      </p>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
             <button
               className="icon-btn"
               onClick={toggleTheme}
@@ -208,6 +269,7 @@ export default function App() {
         <Route path="/dashboard" element={<Private><Dashboard /></Private>} />
         <Route path="/request" element={<Private><NewRequest /></Private>} />
         <Route path="/donors" element={<Private><Donors /></Private>} />
+        <Route path="/requests" element={<Private><Requests /></Private>} />
         <Route path="/inventory" element={<Private><Inventory /></Private>} />
         <Route path="/my-stock" element={<Private><HospitalStock /></Private>} />
         <Route path="/profile" element={<Private><Profile /></Private>} />
